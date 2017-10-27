@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>{{ .Page.Title }} - dweb.wiki</title>
+	<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+	<div class="container is-fluid">
+		<div class="columns title-column">
+			<div class="column is-offset-2">
+				<h1 class="title">dweb.wiki</h1>
+			</div>
+		</div>
+		<div class="columns">
+			<div class="column is-2 has-text-right">
+				<input id="search" class="input" type="text" placeholder="Search">
+				<ul id="menu">
+					{{ $currentPage := .Page.Title }}
+					{{ range .Pages }}
+						{{ if eq $currentPage . }}
+							<li><a class="active" href="../{{ . }}">{{ . }}</a></li>
+						{{ else }}
+							<li><a href="../{{ . }}">{{ . }}</a></li>
+						{{ end }}
+					{{ end }}
+				</ul>
+			</div>
+			<div class="column">
+				<div class="box content">
+					<h2 class="subtitle">{{ .Page.Title }}</h2>
+					<hr />
+					{{ if eq .Page.Contents "" }}
+						<div class="notification is-warning">
+							<p>This page has no content, <a href="https://github.com/VictorBjelkholm/ipfs-wiki/edit/master/pages/{{ .Page.Title }}.md">you should add some...</a></p>
+						</div>
+					{{ else }}
+						{{ .Page.Contents }}
+					{{ end }}
+					<a href="https://github.com/VictorBjelkholm/ipfs-wiki/edit/master/pages/{{ .Page.Title }}.md">Edit this page</a>
+					<div class="index">
+						<h1>All Pages</h1>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+<script>
+
+const pages = {{ .Pages }}
+$search = document.querySelector('#search')
+$menuItems = document.querySelectorAll('#menu li')
+$search.addEventListener('keyup', (e) => {
+	const value = e.target.value
+	$menuItems.forEach((el) => {
+		if (el.innerText.toLowerCase().indexOf(value.toLowerCase()) !== -1) {
+			el.style.display = 'inherit'
+		} else {
+			el.style.display = 'none'
+		}
+	})
+})
+
+$menu = document.querySelector('#menu')
+$menu.addEventListener('scroll', (e) => {
+	window.localStorage.setItem('scroll', e.target.scrollTop)
+})
+if (window.localStorage.scroll) {
+	$menu.scrollTop = window.localStorage.getItem('scroll')
+}
+
+const create = (tag, classname, content) => {
+	const el = document.createElement(tag)
+	el.innerHTML = content
+	el.className = classname
+	return el
+}
+const createTitle = (content) => {
+	return create('h1', 'title is-3 is-uppercase is-letter', content)
+}
+const createSubtitle = (content) => {
+	return create('h1', 'title is-6', content)
+}
+
+const sortedPages = {}
+pages.forEach((page) => {
+	const firstLetter = page.substr(0, 1)
+	const letters = sortedPages[firstLetter]
+	if (letters === undefined) {
+		sortedPages[firstLetter] = []
+	}
+	sortedPages[firstLetter].push(page)
+})
+
+const $index = document.querySelector('.index')
+Object.keys(sortedPages).forEach((key) => {
+	const letter = key
+	const items = sortedPages[letter]
+	const letterWrapped = create('div', 'columns content', '')
+	letterWrapped.appendChild(createTitle(key))
+	items.forEach((page) => {
+		const pageLink = create('a', 'is-link', page)
+		pageLink.href = '../' + page
+		const pageTitle = createSubtitle('')
+		pageTitle.appendChild(pageLink)
+		letterWrapped.appendChild(pageLink)
+	})
+	$index.appendChild(letterWrapped)
+})
+console.log(sortedPages)
+</script>
+</body>
+</html>
